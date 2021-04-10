@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <!-- These meta tags are not necessary for the camera to work -->
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Camera in browsers - pixo</title>
+
+    <!-- imports the webpage's stylesheet -->
+    <style>
+        #cameraFileInput {
+        display: none;
+        }
+
+        #pictureFromCamera {
+        width: 100%;
+        height: auto;
+        margin-top: 16px;
+        }
+
+        .btn {
+        display: inline-block;
+        background-color: #00b531;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        }
+
+        .btn:hover {
+        filter: brightness(0.9);
+        }
+    </style>
+
+    <!-- imports the webpage's javascript file -->
+  </head>
+  <body>
+    <h1>Demo - Native camera in browsers</h1>
+    <h3 id="text"></h3>
+    <!-- The `label` is attached to the hidden file input -->
+    <label for="cameraFileInput">
+      <span class="btn">Open camera</span>
+
+      <!-- The hidden file `input` for opening the native camera -->
+      <input
+        id="cameraFileInput"
+        type="file"
+        accept="image/*"
+        capture="environment"
+      />
+    </label>
+
+    <!-- displays the picture uploaded from the native camera -->
+    <img id="pictureFromCamera" />
+
+    <script>
+      const camera = document.getElementById("cameraFileInput")
+      const h3 = document.getElementById("text")
+      let base64image = ""
+      camera.addEventListener("change", function () {
+      document
+      .getElementById("pictureFromCamera")
+      .setAttribute("src", window.URL.createObjectURL(this.files[0]));
+      console.log(this.files[0]);
+      toDataURL(window.URL.createObjectURL(this.files[0])).then(dataUrl => {
+      console.log('RESULT:', dataUrl)
+      base64image = dataUrl
+      if(base64image !=""){
+        fetchCorlor(base64image);
+      }
+      });
+  });
+
+  const toDataURL = url => fetch(url)
+  .then(response => response.blob())
+  .then(blob => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  }))
+
+  const fetchCorlor = (url) =>{
+  console.log(url.slice(23));
+
+    let _data3 ={
+                "requests": [
+                    {
+                    "image": {
+                        "content": url.slice(23)
+                    },
+                    "features": [
+                        {
+                        "type": "TEXT_DETECTION"
+                        }
+                    ]
+                    }
+                ]
+                }
+    
+    fetch('https://vision.googleapis.com/v1/images:annotate?key=AIzaSyAra6O6us2Np7WcY9qdKzzkXtZIK0l5wmo',{
+        method: 'POST',
+        body: JSON.stringify(_data3),
+    })
+    .then(res => res.json())
+    .then(data => {
+        let text = data.responses[0].fullTextAnnotation.text;
+        console.log(text);
+        h3.innerHTML = text;
+    });
+
+  }
+    // toDataURL('https://www.gravatar.com/avatar/d50c83cc0c6523b4d3f6085295c953e0')
+    //   .then(dataUrl => {
+    //     console.log('RESULT:', dataUrl)
+    //   })
+    </script>
+  </body>
+</html> 
